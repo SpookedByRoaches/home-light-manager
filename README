@@ -1,0 +1,6 @@
+This is the coordinator of the node devices in the other 
+repo
+
+It will act as the main communcation point between the
+different nodes and at the same time serve a UI to control
+the nodes from a human

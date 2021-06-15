@@ -4,7 +4,7 @@ import sys
 import paho.mqtt.client as mqtt
 from flask import Flask, render_template, request
 
-broker = "10.0.0.5"
+broker = "REDACTED"
 to_write = open("/home/pi/scripts/nodeMCU/file.txt", "w")
 def on_connect(client, userdata, flags, rc): 
     if (rc == 0):
@@ -40,7 +40,7 @@ client = mqtt.Client()
 client.on_connect = on_connect 
 client.on_message = on_message 
 client.on_publish = on_publish
-client.username_pw_set(username="Bo3lwa98", password="AneechkIhne!")
+client.username_pw_set(username="REDACTED", password="REDACTED")
 
 if (client.connect(broker, 1883)):
     print ("did not connect")
