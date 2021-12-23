@@ -4,13 +4,14 @@ import sys
 import paho.mqtt.client as mqtt
 from flask import Flask, render_template, request
 
-broker = "REDACTED"
-to_write = open("/home/pi/scripts/nodeMCU/file.txt", "w")
+broker = "localhost"
+
+rooms = {'Desk':4, 'Kitchen':3, 'Living':4, 'Bedroom':4, 'BedroomBathroom':3}
 def on_connect(client, userdata, flags, rc): 
     if (rc == 0):
         print("Connected with result code " + str(rc)) 
-        client.subscribe("lights/desk/state") 
-        client.subscribe("lights/D7/state") 
+        client.subscribe("lights/Desk/state") 
+        client.subscribe("lights/Kitchen/state") 
     else:
         print("Could not connect; code " + str(rc))
 
@@ -48,30 +49,23 @@ if (client.connect(broker, 1883)):
 
 client.loop_start()
 
-"""
-ret = client.publish("lights/pin2", "on")
-
-ret = client.publish("lights/D7", "on")
-
-ret = client.publish("lights/pin2", "reqState")
-
-if (ret[0]):
-    print("could not send message")
-"""
-
 app = Flask(__name__)
 
-pins = {
-   "desk" : {'name' : 'desk', 'state' : 1, "topic": "lights/desk"},
-   "D7": {'name' : 'Node D7', 'state' : 1, 'topic': "lights/D7"},
-   }
+pins = {}
 
+for room, numPins in rooms.items():
+    pins[room] = []
+    for i in range(numPins):
+        pins[room].append({'name' : room + ' ' + str(i) , 'state' : 0, 'topic': 'lights/' + room + '/' + str(i)})
+
+print(pins)
 
 @app.route("/")
 def main():
    # For each pin, read the pin state and store it in the pins dictionary:
-   for pin in pins:
-      ret = client.publish("lights/"+pin, "reqState")
+   for room in pins:
+       for pin in room:
+          ret = client.publish('lights/' + room + '/' + pin, "reqState")
    # Put the pin dictionary into the template data dictionary:
    templateData = {
       'pins' : pins
@@ -80,23 +74,23 @@ def main():
    return render_template('index.html', **templateData)
 
 
-@app.route("/<changePin>/<action>")
-def action(changePin, action):
+@app.route("/<room>/<pin>/<action>")
+def action(room, pin, action):
    # Convert the pin from the URL into an integer:
    # Get the device name for the pin being changed:
-   deviceName = pins[changePin]['name']
-   topicName = pins[changePin]['topic']
+   deviceName = pins[room][pin]['name']
+   topicName = pins[room][pin]['topic']
    # If the action part of the URL is "on," execute the code indented below:
    if action == "on":
       # Set the pin high:
       ret_val = client.publish(topicName, "on")
       print("Got " + str(ret_val))
-      pins[changePin]["state"] = 1
+      pins[room][pin]["state"] = 1
       # Save the status message to be passed into the template:
       message = "Turned " + topicName + " on."
    if action == "off":
       client.publish(topicName, "off")
-      pins[changePin]["state"] = 0
+      pins[room][pin]["state"] = 0
       message = "Turned " + topicName + " off."
    print(message)
 
